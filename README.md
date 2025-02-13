@@ -8,7 +8,7 @@ WebAssembly (Wasm) で実装されたブラウザ上で動作するWebサーバ�
 
 ## 環境準備
 - Rust
-    - curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+    - ```curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh```
     - source "$HOME/.cargo/env"
 - wasm-pack
     - cargo install wasm-pack
