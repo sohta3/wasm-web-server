@@ -9,15 +9,15 @@ WebAssembly (Wasm) で実装されたブラウザ上で動作するWebサーバ�
 ## 環境準備
 - Rust
     - ```curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh```
-    - source "$HOME/.cargo/env"
+    - ```source "$HOME/.cargo/env"```
 - wasm-pack
-    - cargo install wasm-pack
+    - ```cargo install wasm-pack```
  
 ## Rustのライブラリをインストール
-- cargo build
+```cargo build```
 
 ## Wasmビルド
-wasm-pack build --target web
+```wasm-pack build --target web```
 
 ## サーバー起動
-npx live-server
+```npx live-server```
