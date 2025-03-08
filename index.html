@@ -3,13 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wasm Web Server</title>
+    <title>Wasm Web Server - TODOリスト</title>
     <style>
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .todo-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .todo-input {
+            flex-grow: 1;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
         .button {
-            padding: 10px 20px;
-            margin: 10px;
+            padding: 8px 16px;
             border: none;
-            border-radius: 5px;
+            border-radius: 4px;
             background-color: #4CAF50;
             color: white;
             cursor: pointer;
@@ -17,39 +32,148 @@
         .button:hover {
             background-color: #45a049;
         }
-        #output {
-            margin: 20px;
+        .todo-list {
+            list-style: none;
+            padding: 0;
+        }
+        .todo-item {
+            display: flex;
+            align-items: center;
             padding: 10px;
             border: 1px solid #ddd;
-            border-radius: 5px;
+            border-radius: 4px;
+            margin-bottom: 5px;
+        }
+        .todo-item.completed {
+            background-color: #f8f8f8;
+        }
+        .todo-item.completed .todo-text {
+            text-decoration: line-through;
+        }
+        .todo-checkbox {
+            margin-right: 10px;
+        }
+        .todo-text {
+            flex-grow: 1;
+        }
+        .delete-button {
+            background-color: #f44336;
+            margin-left: 10px;
+        }
+        .delete-button:hover {
+            background-color: #da190b;
         }
     </style>
 </head>
 <body>
-    <h1>Wasm Web Server</h1>
+    <div class="container">
+        <h1>TODOリスト</h1>
 
-    <div>
-        <button class="button" onclick="sendRequest('/')">ルートパスへリクエスト</button>
-        <button class="button" onclick="sendRequest('/hello')">Hello パスへリクエスト</button>
-        <button class="button" onclick="sendRequest('/api/data')">API パスへリクエスト</button>
-        <button class="button" onclick="sendRequest('/error')">error</button>
-    </div>
+        <div class="todo-form">
+            <input type="text" id="newTodo" class="todo-input" placeholder="新しいTODOを入力">
+            <button onclick="addTodo()" class="button">追加</button>
+        </div>
 
-    <div id="output">
-        レスポンスがここに表示されます...
+        <ul id="todoList" class="todo-list">
+            <!-- TODOアイテムがここに動的に追加されます -->
+        </ul>
     </div>
 
     <script type="module" src="index.js"></script>
     <script>
-        async function sendRequest(path) {
+        // TODOリストの取得
+        async function fetchTodos() {
             try {
-                const response = await fetch(`http://localhost:3000${path}`);
-                const text = await response.text();
-                document.getElementById('output').textContent =  `${text}`;
+                const response = await fetch('http://localhost:3000/api/todos');
+                const todos = await response.json();
+                renderTodos(todos);
             } catch (error) {
-                document.getElementById('output').textContent = `エラー: ${error.message}`;
+                console.error('TODOの取得に失敗:', error);
             }
         }
+
+        // TODOリストの表示
+        function renderTodos(todos) {
+            const todoList = document.getElementById('todoList');
+            todoList.innerHTML = '';
+
+            todos.forEach(todo => {
+                const li = document.createElement('li');
+                li.className = `todo-item ${todo.completed ? 'completed' : ''}`;
+
+                li.innerHTML = `
+                    <input type="checkbox" class="todo-checkbox"
+                           ${todo.completed ? 'checked' : ''}
+                           onchange="toggleTodo(${todo.id}, this.checked)">
+                    <span class="todo-text">${todo.title}</span>
+                    <button class="button delete-button" onclick="deleteTodo(${todo.id})">削除</button>
+                `;
+
+                todoList.appendChild(li);
+            });
+        }
+
+        // 新しいTODOの追加
+        async function addTodo() {
+            const input = document.getElementById('newTodo');
+            const title = input.value.trim();
+
+            if (!title) return;
+
+            try {
+                await fetch('http://localhost:3000/api/todos', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        title,
+                        completed: false
+                    })
+                });
+
+                input.value = '';
+                fetchTodos();
+            } catch (error) {
+                console.error('TODOの追加に失敗:', error);
+            }
+        }
+
+        // TODOの完了状態の切り替え
+        async function toggleTodo(id, completed) {
+            try {
+                await fetch(`http://localhost:3000/api/todos/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        id,
+                        completed
+                    })
+                });
+
+                fetchTodos();
+            } catch (error) {
+                console.error('TODOの更新に失敗:', error);
+            }
+        }
+
+        // TODOの削除
+        async function deleteTodo(id) {
+            try {
+                await fetch(`http://localhost:3000/api/todos/${id}`, {
+                    method: 'DELETE'
+                });
+
+                fetchTodos();
+            } catch (error) {
+                console.error('TODOの削除に失敗:', error);
+            }
+        }
+
+        // 初期表示時にTODOリストを取得
+        document.addEventListener('DOMContentLoaded', fetchTodos);
     </script>
 </body>
 </html>
