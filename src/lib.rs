@@ -37,10 +37,11 @@ impl WebServer {
 
     #[wasm_bindgen]
     pub fn handle_request(&self, request: Request) -> Result<Response, JsValue> {
-        let path = request.url();
+        let url = web_sys::Url::new(&request.url())?;
+        let path = url.pathname();
 
         for (route_path, content) in &self.routes {
-            if path.contains(route_path) {
+            if &path == route_path {
                 if route_path.contains("api") {
                     return Self::create_response(&content, 200, "application/json");
                 } else {
